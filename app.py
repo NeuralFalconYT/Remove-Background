@@ -71,13 +71,13 @@ def ui3():
               output_video = gr.Video(label="Green Screen Video")
 
       run_btn.click(fn=process_video, inputs=input_video, outputs=output_video)
-    #   gr.Examples(
-    #     examples=[["./assets/video.mp4"]],
-    #     inputs=[input_video],
-    #     outputs=[output_video],
-    #     fn=process_video,
-    #     cache_examples=True,
-    # )
+      gr.Examples(
+        examples=[["./assets/video.mp4"]],
+        inputs=[input_video],
+        outputs=[output_video],
+        fn=process_video,
+        # cache_examples=True,
+    )
   return demo
 demo1=ui1()
 demo2=ui2()
