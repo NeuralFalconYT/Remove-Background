@@ -1,6 +1,6 @@
 import gradio as gr
 from gradio_imageslider import ImageSlider 
-from helper import create_transparent_foreground,remove_background_batch_images,remove_background_from_video
+from helper import create_transparent_foreground,remove_background_batch_images,remove_background_from_video,cam_green_screen
 from soft_foreground_segmenter import SoftForegroundSegmenter
 foreground_model = "foreground-segmentation-model-vitl16_384.onnx"
 foreground_segmenter = SoftForegroundSegmenter(onnx_model=foreground_model)
@@ -79,8 +79,31 @@ def ui3():
         # cache_examples=True,
     )
   return demo
+
+
+def green_screen_affect(image):
+    return cam_green_screen(image,foreground_segmenter)
+
+def ui4():
+  gr.Markdown("## Realtime Webcam")
+
+  with gr.Blocks() as demo:
+      with gr.Row():
+          input_img = gr.Image(sources=["webcam"])
+          output_img = gr.Image()
+          input_img.stream(green_screen_affect, input_img, output_img)
+  # Or standard streaming
+  demo = gr.Interface(
+      fn=green_screen_affect,
+      inputs=gr.Image(sources=["webcam"], streaming=True),
+      outputs=gr.Image(),
+      live=True
+      )
+  return demo
+
 demo1=ui1()
 demo2=ui2()
 demo3=ui3()
-demo = gr.TabbedInterface([demo1, demo2,demo3],["Background Remove From Image","Background Remover From Bulk Images","Remove Background From Video"],title="Microsoft DAViD Background Remove")
+demo4=ui4()
+demo = gr.TabbedInterface([demo1, demo2,demo3,demo4],["Background Remove From Image","Background Remover From Bulk Images","Remove Background From Video","Realtime Webcam"],title="Microsoft DAViD Background Remove")
 demo.queue().launch(debug=True, share=True)
