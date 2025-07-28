@@ -74,6 +74,48 @@ def apply_green_screen(image_path, save_path,foreground_segmenter):
     return output_bgr
 
 
+def cam_green_screen(image,foreground_segmenter):
+
+    # Remove transparency if present
+    if image.shape[2] == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+
+    # Convert to RGB for the model
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # Get segmentation mask
+    mask = foreground_segmenter.estimate_foreground_segmentation(image_rgb)
+
+    # Normalize and convert mask to 0-255 uint8
+    if mask.max() <= 1.0:
+        mask = (mask * 255).astype(np.uint8)
+    else:
+        mask = mask.astype(np.uint8)
+
+    if mask.ndim == 2:
+        mask_gray = mask
+    elif mask.shape[2] == 1:
+        mask_gray = mask[:, :, 0]
+    else:
+        mask_gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+    _, binary_mask = cv2.threshold(mask_gray, 128, 255, cv2.THRESH_BINARY)
+
+    # Create green background
+    green_bg = np.full_like(image_rgb, (0, 255, 0), dtype=np.uint8)
+
+    # Create 3-channel mask
+    mask_3ch = cv2.cvtColor(binary_mask, cv2.COLOR_GRAY2BGR)
+
+    # Composite: foreground from image, background as green
+    output_rgb = np.where(mask_3ch == 255, image_rgb, green_bg)
+
+    # Convert back to BGR for OpenCV
+    output_bgr = cv2.cvtColor(output_rgb, cv2.COLOR_RGB2BGR)
+    return output_bgr
+
+
+
 def create_transparent_foreground(image_path,foreground_segmenter):
     uid = uuid.uuid4().hex[:8].upper()
     base_name = os.path.splitext(os.path.basename(image_path))[0]
