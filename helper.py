@@ -338,10 +338,12 @@ def extract_audio_from_video(video_path, output_audio_path="output_audio.wav", f
         ]
     else:
         raise ValueError("Unsupported format. Use 'wav' or 'mp3'.")
-
-    # Run command silently
-    subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
+    try:        
+        # Run command silently
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except:
+        return False
 def add_audio(video_path, audio_path, output_path, use_gpu=False):
     """
     Replaces the audio of a video with a new audio track.
@@ -405,14 +407,16 @@ def remove_background_from_video(uploaded_video_path,foreground_segmenter):
     merge_video_chunks(output_path=os.path.basename(temp_video_path), use_gpu=gpu)
 
     # Step 5: Extract original audio
-    extract_audio_from_video(uploaded_video_path, output_audio_path=audio_path)
-
-    # Step 6: Add audio back
-    add_audio(
-        video_path=temp_video_path,
-        audio_path=audio_path,
-        output_path=final_output_path,
-        use_gpu=True
-    )
-
-    return os.path.abspath(final_output_path)
+    audio_flag=extract_audio_from_video(uploaded_video_path, output_audio_path=audio_path)
+    if audio_flag:
+        # Step 6: Add audio back
+        add_audio(
+            video_path=temp_video_path,
+            audio_path=audio_path,
+            output_path=final_output_path,
+            use_gpu=True
+        )
+    
+        return os.path.abspath(final_output_path)
+    else:
+        return os.path.abspath(temp_video_path)
